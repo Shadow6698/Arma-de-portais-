@@ -1,3 +1,4 @@
+-- Tool (Arma de Portais)
 local Tool = Instance.new("Tool")
 Tool.Name = "Arma de Portais"
 Tool.RequiresHandle = false
@@ -7,12 +8,13 @@ local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
 local selectedLocation = nil
 local portals = {} -- Lista para armazenar os portais criados
+local originalPosition = nil  -- Posição de origem para retorno
 
 -- Criando GUI móvel
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 200, 0, 320)
+frame.Size = UDim2.new(0, 180, 0, 300)
 frame.Position = UDim2.new(0, 50, 0, 50)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.Active = true
@@ -103,24 +105,44 @@ local locations = {
     ["Praça"] = Vector3.new(-13, 6, -17) -- Local adicionado
 }
 
--- Criar botões no GUI
+-- Criar botões no GUI para cada local
 for name, position in pairs(locations) do
     local button = Instance.new("TextButton", scroll)
     button.Size = UDim2.new(1, -10, 0, 25)
     button.Text = name
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Parent = scroll
-
     button.MouseButton1Click:Connect(function()
         selectedLocation = position
+        originalPosition = player.Character.HumanoidRootPart.Position
         print("Local escolhido: " .. name)
+    end)
+end
+
+-- Função para criar o portal de retorno (Vermelho)
+local function createReturnPortal()
+    wait(2)  -- Aguardar 2 segundos antes de ativar o portal vermelho
+
+    local returnPortal = Instance.new("Part")
+    returnPortal.Size = Vector3.new(5, 10, 1)
+    returnPortal.Color = Color3.fromRGB(255, 0, 0)  -- Cor do portal de retorno
+    returnPortal.Anchored = true
+    returnPortal.CFrame = CFrame.new(selectedLocation + Vector3.new(0, 5, 0))  -- Coloca o portal um pouco acima do chão
+    returnPortal.Parent = workspace
+
+    returnPortal.Touched:Connect(function(hit)
+        local character = hit.Parent
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+            returnPortal:Destroy()  -- O portal vermelho desaparece quando usado
+        end
     end)
 end
 
 -- Criar portal ao clicar na tela
 Tool.Activated:Connect(function()
     if selectedLocation then
+        -- Cria o portal azul
         local portal = Instance.new("Part")
         portal.Size = Vector3.new(5, 10, 1)
         portal.Color = Color3.fromRGB(0, 0, 255)
@@ -129,11 +151,16 @@ Tool.Activated:Connect(function()
         portal.Parent = workspace
         table.insert(portals, portal) -- Armazena o portal na lista
 
-        -- Criando teleporte ao entrar no portal
+        -- Criando teleporte ao entrar no portal azul
         portal.Touched:Connect(function(hit)
             local character = hit.Parent
             if character and character:FindFirstChild("HumanoidRootPart") then
+                -- Teleporta para o novo local
                 character.HumanoidRootPart.CFrame = CFrame.new(selectedLocation)
+                portal:Destroy()  -- O portal azul desaparece depois de ser usado
+
+                -- Cria o portal vermelho para o retorno após 2 segundos
+                createReturnPortal()
             end
         end)
     end
