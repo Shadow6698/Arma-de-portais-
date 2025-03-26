@@ -102,9 +102,182 @@ local locations = {
     ["Drones"] = Vector3.new(-680, 252, 762),
     ["Fazenda 1"] = Vector3.new(-851, 6, -57),
     ["Fazenda 2"] = Vector3.new(-863, 6, -375),
+    ["Praça"] = Vector3.new(-13, 6, -17),
+    ["Escola"] = Vector3.new(-330, 4, 207), -- Novo local
+    ["Montanha"] = Vector3.new(-692, 4, 1057) -- Novo local
+}
+
+-- Criar botões no GUI para cada local
+for name, position in pairs(locations) do
+    local button = Instance.new("TextButton", scroll)
+    button.Size = UDim2.new(1, -10, 0, 25)
+    button.Text = name
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.MouseButton1Click:Connect(function()
+        selectedLocation = position
+        originalPosition = player.Character.HumanoidRootPart.Position
+  
+        print("Local escolhido: " .. name)
+        -- Teleportar o jogador para o local selecionado
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+    end)
+end
+
+-- Criar botões no GUI para cada local
+for name, position in pairs(locations) do
+    local button = Instance.new("TextButton", scroll)
+    button.Size = UDim2.new(1, -10, 0, 25)
+    button.Text = name
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.MouseButton1Click:Connect(function()
+        selectedLocation = position
+        originalPosition = player.Character.HumanoidRootPart.Position
+        print("Local escolhido: " .. name)
+    end)
+end
+
+-- Função para criar o portal de retorno (Vermelho)
+local function createReturnPortal()
+    wait(2)  -- Aguardar 2 segundos antes de ativar o portal vermelho
+
+    local returnPortal = Instance.new("Part")
+    returnPortal.Size = Vector3.new(5, 10, 1)
+    returnPortal.Color = Color3.fromRGB(255, 0, 0)  -- Cor do portal de retorno
+    returnPortal.Anchored = true
+    returnPortal.CFrame = CFrame.new(selectedLocation + Vector3.new(0, 5, 0))  -- Coloca o portal um pouco acima do chão
+    returnPortal.Parent = workspace
+
+    returnPortal.Touched:Connect(function(hit)
+        local character = hit.Parent
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+            returnPortal:Destroy()  -- O portal vermelho desaparece quando usado
+        end
+    end)
+end
+
+-- Criar portal ao clicar na tela
+Tool.Activated:Connect(function()
+    if selectedLocation then
+        -- Cria o portal azul
+        local portal = Instance.new("Part")
+        portal.Size = Vector3.new(5, 10, 1)
+        portal.Color = Color3.fromRGB(0, 0, 255)
+        portal.Anchored = true
+        portal.CFrame = CFrame.new(mouse.Hit.p + Vector3.new(0, 5, 0))
+        portal.Parent = workspace
+        table.insert(portals, portal) -- Armazena o portal na lista
+
+        -- Criando teleporte ao entrar no portal azul
+        portal.Touched:Connect(function(hit)
+            local character = hit.Parent
+            if character and character:FindFirst-- Tool (Arma de Portais)
+local Tool = Instance.new("Tool")
+Tool.Name = "Arma de Portais"
+Tool.RequiresHandle = false
+Tool.Parent = game.Players.LocalPlayer.Backpack
+
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local selectedLocation = nil
+local portals = {} -- Lista para armazenar os portais criados
+local originalPosition = nil  -- Posição de origem para retorno
+
+-- Criando GUI móvel
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 180, 0, 300)
+frame.Position = UDim2.new(0, 50, 0, 50)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+frame.Draggable = true
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -30, 0, 30)
+title.Text = "Escolha um local"
+title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Botão "X" para limpar todos os portais
+local clearButton = Instance.new("TextButton", frame)
+clearButton.Size = UDim2.new(0, 30, 0, 30)
+clearButton.Position = UDim2.new(1, -30, 0, 0)
+clearButton.Text = "X"
+clearButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+clearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+clearButton.MouseButton1Click:Connect(function()
+    for _, portal in pairs(portals) do
+        portal:Destroy()
+    end
+    portals = {} -- Limpa a lista de portais
+end)
+
+local scroll = Instance.new("ScrollingFrame", frame)
+scroll.Size = UDim2.new(1, 0, 1, -60)
+scroll.Position = UDim2.new(0, 0, 0, 30)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 5
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local listLayout = Instance.new("UIListLayout", scroll)
+listLayout.Padding = UDim.new(0, 5)
+
+-- Botão para limpar a seleção
+local clearSelectionButton = Instance.new("TextButton", frame)
+clearSelectionButton.Size = UDim2.new(1, 0, 0, 25)
+clearSelectionButton.Position = UDim2.new(0, 0, 1, -25)
+clearSelectionButton.Text = "Limpar Seleção"
+clearSelectionButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+clearSelectionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+clearSelectionButton.MouseButton1Click:Connect(function()
+    selectedLocation = nil
+    print("Local desmarcado!")
+end)
+
+-- Lista de locais
+local locations = {
+    ["Salão de Beleza"] = Vector3.new(-76, 4, -123),
+    ["Local do Sofá"] = Vector3.new(-82, 22, -128),
+    ["Doceria"] = Vector3.new(-125, 6, -120),
+    ["Lugar de Jogos"] = Vector3.new(-172, 1, -126),
+    ["Delegacia"] = Vector3.new(-121, 4, 31),
+    ["Hospital"] = Vector3.new(-293, 4, 40),
+    ["Banco Comum"] = Vector3.new(-358, 25, -143),
+    ["Bombeiros"] = Vector3.new(-469, 6, -122),
+    ["Cemitério"] = Vector3.new(-486, 7, 56),
+    ["Hospital 2"] = Vector3.new(-315, 6, 211),
+    ["Creche"] = Vector3.new(-157, 4, 125),
+    ["Local das Caixas"] = Vector3.new(-162, 4, 268),
+    ["Local de Lanches Espanhóis"] = Vector3.new(-169, 20, 291),
+    ["Livraria"] = Vector3.new(-129, 4, 259),
+    ["Celulares"] = Vector3.new(-127, 21, 253),
+    ["Coffes"] = Vector3.new(-96, 5, 250),
+    ["Veterinário"] = Vector3.new(-100, 22, 262),
+    ["Dentista"] = Vector3.new(-53, 20, 268),
+    ["Novo Banco"] = Vector3.new(3, 4, 257),
+    ["Hotel"] = Vector3.new(199, 10, 188),
+    ["Hamburgueria"] = Vector3.new(156, 8, 39),
+    ["Aeroporto"] = Vector3.new(317, 7, 40),
+    ["Shopping"] = Vector3.new(165, 5, -158),
+    ["Apartamento 1"] = Vector3.new(-35, 20, -126),
+    ["Apartamento 2"] = Vector3.new(-34, 37, -136),
+    ["Igreja"] = Vector3.new(-64, 37, -192),
+    ["Praia Guarda-Chuva Azul"] = Vector3.new(70, 8, -1433),
+    ["Casa Abandonada"] = Vector3.new(1044, 8, 54),
+    ["Casa de Máquinas"] = Vector3.new(235, 4, 813),
+    ["Praia Normal"] = Vector3.new(-218, 1, 760),
+    ["Iate"] = Vector3.new(-125, 33, 856),
+    ["Cabana"] = Vector3.new(-249, 6, 1078),
+    ["Praia Guarda-Chuva Vermelho"] = Vector3.new(15, 4, 1460),
+    ["Drones"] = Vector3.new(-680, 252, 762),
+    ["Fazenda 1"] = Vector3.new(-851, 6, -57),
+    ["Fazenda 2"] = Vector3.new(-863, 6, -375),
     ["Praça"] = Vector3.new(-13, 6, -17) -- Local adicionado
-["escola"] = Vector3.new(-330, 4, 207) -- Local adicionado 
-["montanha"] = Vector3.new(-692, 4, 1057)
 
 -- Criar botões no GUI para cada local
 for name, position in pairs(locations) do
@@ -156,6 +329,17 @@ Tool.Activated:Connect(function()
         portal.Touched:Connect(function(hit)
             local character = hit.Parent
             if character and character:FindFirstChild("HumanoidRootPart") then
+                -- Teleporta para o novo local
+                character.HumanoidRootPart.CFrame = CFrame.new(selectedLocation)
+                portal:Destroy()  -- O portal azul desaparece depois de ser usado
+
+                -- Cria o portal vermelho para o retorno após 2 segundos
+                createReturnPortal()
+            end
+        end)
+    end
+end)
+Child("HumanoidRootPart") then
                 -- Teleporta para o novo local
                 character.HumanoidRootPart.CFrame = CFrame.new(selectedLocation)
                 portal:Destroy()  -- O portal azul desaparece depois de ser usado
