@@ -103,8 +103,8 @@ local locations = {
     ["Fazenda 1"] = Vector3.new(-851, 6, -57),
     ["Fazenda 2"] = Vector3.new(-863, 6, -375),
     ["Praça"] = Vector3.new(-13, 6, -17),
-    ["Escola"] = Vector3.new(200, 5, -50), -- Nova localização
-    ["Montanha"] = Vector3.new(500, 50, 300) -- Nova localização
+    ["Escola"] = Vector3.new(-315, 6, 188), -- Nova localização
+    ["Montanha"] = Vector3.new(-580, 1, 1026) -- Nova localização
 }
 
 -- Criar botões no GUI para cada local
