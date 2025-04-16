@@ -1,164 +1,63 @@
--- Tool (Arma de Portais)
-local Tool = Instance.new("Tool")
-Tool.Name = "Arma de Portais"
-Tool.RequiresHandle = false
-Tool.Parent = game.Players.LocalPlayer.Backpack
-
 local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
-local selectedLocation = nil
-local portals = {} -- Lista para armazenar os portais criados
-local originalPosition = nil  -- Posição de origem para retorno
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "GhostHubGUI"
+gui.ResetOnSpawn = false
 
--- Criando GUI móvel
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-
-local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 180, 0, 320)
-frame.Position = UDim2.new(0, 50, 0, 50)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 50)
+frame.Position = UDim2.new(0.5, -100, 0.5, -25)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 0
 frame.Active = true
-frame.Draggable = true
+frame.Draggable = true -- para PC (mouse)
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, -30, 0, 30)
-title.Text = "Escolha um local"
-title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+-- Draggable para Touch (mobile)
+local dragging, dragInput, dragStart, startPos
 
--- Botão "X" para limpar todos os portais
-local clearButton = Instance.new("TextButton", frame)
-clearButton.Size = UDim2.new(0, 30, 0, 30)
-clearButton.Position = UDim2.new(1, -30, 0, 0)
-clearButton.Text = "X"
-clearButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-clearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-clearButton.MouseButton1Click:Connect(function()
-    for _, portal in pairs(portals) do
-        portal:Destroy()
-    end
-    portals = {} -- Limpa a lista de portais
-end)
-
-local scroll = Instance.new("ScrollingFrame", frame)
-scroll.Size = UDim2.new(1, 0, 1, -60)
-scroll.Position = UDim2.new(0, 0, 0, 30)
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-scroll.ScrollBarThickness = 5
-scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-local listLayout = Instance.new("UIListLayout", scroll)
-listLayout.Padding = UDim.new(0, 5)
-
--- Botão para limpar a seleção
-local clearSelectionButton = Instance.new("TextButton", frame)
-clearSelectionButton.Size = UDim2.new(1, 0, 0, 25)
-clearSelectionButton.Position = UDim2.new(0, 0, 1, -25)
-clearSelectionButton.Text = "Limpar Seleção"
-clearSelectionButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-clearSelectionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-clearSelectionButton.MouseButton1Click:Connect(function()
-    selectedLocation = nil
-    print("Local desmarcado!")
-end)
-
--- Lista de locais com as novas localizações (Escola e Montanha)
-local locations = {
-    ["Salão de Beleza"] = Vector3.new(-76, 4, -123),
-    ["Local do Sofá"] = Vector3.new(-82, 22, -128),
-    ["Doceria"] = Vector3.new(-125, 6, -120),
-    ["Lugar de Jogos"] = Vector3.new(-172, 1, -126),
-    ["Delegacia"] = Vector3.new(-121, 4, 31),
-    ["Hospital"] = Vector3.new(-293, 4, 40),
-    ["Banco Comum"] = Vector3.new(-358, 25, -143),
-    ["Bombeiros"] = Vector3.new(-469, 6, -122),
-    ["Cemitério"] = Vector3.new(-486, 7, 56),
-    ["Hospital 2"] = Vector3.new(-315, 6, 211),
-    ["Creche"] = Vector3.new(-157, 4, 125),
-    ["Local das Caixas"] = Vector3.new(-162, 4, 268),
-    ["Local de Lanches Espanhóis"] = Vector3.new(-169, 20, 291),
-    ["Livraria"] = Vector3.new(-129, 4, 259),
-    ["Celulares"] = Vector3.new(-127, 21, 253),
-    ["Coffes"] = Vector3.new(-96, 5, 250),
-    ["Veterinário"] = Vector3.new(-100, 22, 262),
-    ["Dentista"] = Vector3.new(-53, 20, 268),
-    ["Novo Banco"] = Vector3.new(3, 4, 257),
-    ["Hotel"] = Vector3.new(199, 10, 188),
-    ["Hamburgueria"] = Vector3.new(156, 8, 39),
-    ["Aeroporto"] = Vector3.new(317, 7, 40),
-    ["Shopping"] = Vector3.new(165, 5, -158),
-    ["Apartamento 1"] = Vector3.new(-35, 20, -126),
-    ["Apartamento 2"] = Vector3.new(-34, 37, -136),
-    ["Igreja"] = Vector3.new(-64, 37, -192),
-    ["Praia Guarda-Chuva Azul"] = Vector3.new(70, 8, -1433),
-    ["Casa Abandonada"] = Vector3.new(1044, 8, 54),
-    ["Casa de Máquinas"] = Vector3.new(235, 4, 813),
-    ["Praia Normal"] = Vector3.new(-218, 1, 760),
-    ["Iate"] = Vector3.new(-125, 33, 856),
-    ["Cabana"] = Vector3.new(-249, 6, 1078),
-    ["Praia Guarda-Chuva Vermelho"] = Vector3.new(15, 4, 1460),
-    ["Drones"] = Vector3.new(-680, 252, 762),
-    ["Fazenda 1"] = Vector3.new(-851, 6, -57),
-    ["Fazenda 2"] = Vector3.new(-863, 6, -375),
-    ["Praça"] = Vector3.new(-13, 6, -17),
-    ["Escola"] = Vector3.new(-315, 6, 188), -- Nova localização
-    ["Montanha"] = Vector3.new(-580, 1, 1026) -- Nova localização
-}
-
--- Criar botões no GUI para cada local
-for name, position in pairs(locations) do
-    local button = Instance.new("TextButton", scroll)
-    button.Size = UDim2.new(1, -10, 0, 25)
-    button.Text = name
-    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.MouseButton1Click:Connect(function()
-        selectedLocation = position
-        originalPosition = player.Character.HumanoidRootPart.Position
-        print("Local escolhido: " .. name)
-    end)
+local function update(input)
+	if dragging then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
 end
 
--- Função para criar o portal de retorno (Vermelho)
-local function createReturnPortal()
-    wait(2)
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
 
-    local returnPortal = Instance.new("Part")
-    returnPortal.Size = Vector3.new(5, 10, 1)
-    returnPortal.Color = Color3.fromRGB(255, 0, 0)
-    returnPortal.Anchored = true
-    returnPortal.CFrame = CFrame.new(selectedLocation + Vector3.new(0, 5, 0))
-    returnPortal.Parent = workspace
-
-    returnPortal.Touched:Connect(function(hit)
-        local character = hit.Parent
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
-            returnPortal:Destroy()
-        end
-    end)
-end
-
--- Criar portal ao clicar na tela
-Tool.Activated:Connect(function()
-    if selectedLocation then
-        local portal = Instance.new("Part")
-        portal.Size = Vector3.new(5, 10, 1)
-        portal.Color = Color3.fromRGB(0, 0, 255)
-        portal.Anchored = true
-        portal.CFrame = CFrame.new(mouse.Hit.p + Vector3.new(0, 5, 0))
-        portal.Parent = workspace
-        table.insert(portals, portal)
-
-        portal.Touched:Connect(function(hit)
-            local character = hit.Parent
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                character.HumanoidRootPart.CFrame = CFrame.new(selectedLocation)
-                portal:Destroy()
-                createReturnPortal()
-            end
-        end)
-    end
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
 end)
+
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput then
+		update(input)
+	end
+end)
+
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.new(1, 0, 1, 0)
+button.Text = "Carregar GhostHub"
+button.TextColor3 = Color3.new(1, 1, 1)
+button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+button.BorderSizePixel = 0
+button.Font = Enum.Font.GothamBold
+button.TextSize = 16
+
+button.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/GhostPlayer352/Test4/main/GhostHub'))()
+end)
+
